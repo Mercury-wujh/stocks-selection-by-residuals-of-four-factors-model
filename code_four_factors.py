@@ -4,12 +4,12 @@ from tqdm import tqdm
 import statsmodels.api as sm
 
 import sys
-sys.path.append('D:/实习/华泰金工/factor_demo/20240924factor_demo/Codes/Dataset_Code/Code')  # 替换为func_four_factors上级路径
+sys.path.append('D:/Codes/Dataset_Code/Code')  # 替换为func_four_factors上级路径
 import func_four_factors as func
 
-#%% 数据读取
-data = pd.read_csv("D:/实习/project/四因子初探/data.csv")
-# 日期范围
+#%% read the initial data
+data = pd.read_csv("D:/project/data.csv")  # the absolute path of your data
+# date range
 start_date = "20221231"
 end_date = "20250531"
 
@@ -140,21 +140,21 @@ factor = factor.reset_index().rename(columns={0: 'residual'})
 horizon = 1  # 调仓周期
 close = calc.pivot(index='code', columns='date', values='close_adj')  # 将close列从长数据转化成宽数据,便于后续计算
 
-# IC测试
+# IC test
 ic, ric = func.ic_test(factor, close, pred_str='residual')
 
-# 分层测试
+# layered backtest
 quantile_value_abs, quantile_value_rel, excess_layers = func.layered_test(
     factor, close, 'residual', 0.1, horizon
 )
 r_long, r_short, r_hedge, r_avg = func.calc_long_short_return(quantile_value_abs)
 
-# 汇总回测结果
-# 累积ic
+# bas=cktest results summary
+# cumulative ic
 evaluation_cum = pd.DataFrame(columns=['ic_cum', 'ric_cum'])
 evaluation_cum['ic_cum'] = ic.iloc[::horizon].cumsum()
 evaluation_cum['ric_cum'] = ric.iloc[::horizon].cumsum()
-# 指标均值
+# indicators average
 evaluation_avg = pd.Series(dtype=float)
 evaluation_avg.loc['ic'] = np.nanmean(ic)
 evaluation_avg.loc['rankic'] = np.nanmean(ric)
@@ -168,8 +168,8 @@ evaluation_avg.loc['top_sharpe'] = np.sqrt(252) * r_long.mean() / r_long.std()
 evaluation_avg.loc['bottom_sharpe'] = np.sqrt(252) * r_short.mean() / r_short.std()
 evaluation_avg.loc['hedge_sharpe'] = np.sqrt(252) * (r_long - r_short).mean() / 2 / (r_long - r_short).std()
 
-# 写入excel
-save_path = 'D:/实习/华泰金工/factor_demo/20240924factor_demo/Codes/Dataset_Code/Code/'
+# save into excel
+save_path = 'your_save_path'
 writer = pd.ExcelWriter(save_path + 'evaluation_prediction.xlsx')
 evaluation_avg.to_excel(writer, sheet_name='evaluation_avg')
 evaluation_cum.to_excel(writer, sheet_name='evaluation_cum')
@@ -177,4 +177,5 @@ quantile_value_abs.to_excel(writer, sheet_name='quantile_value_abs')
 quantile_value_rel.to_excel(writer, sheet_name='quantile_value_rel')
 excess_layers.to_excel(writer, sheet_name='excess_layers')
 writer.close()
+
 
